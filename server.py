@@ -4,7 +4,7 @@
 from fastmcp import FastMCP
 import os, requests, requests.auth, time
 import secrets
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import json
@@ -34,14 +34,50 @@ async def auth_middleware(ctx, call_next):
 NCBI_KEY = os.getenv("NCBI_API_KEY")
 
 @mcp.tool
-def pubmed_search(query: str, max_results: int = 20) -> list[str]:
-    """Return PubMed IDs that match the search term."""
+def pubmed_search(query: str, max_results: int = 20, return_details: bool = True) -> Union[List[str], List[Dict[str, Any]]]:
+    """Search PubMed and return article details.
+    
+    Args:
+        query: Search query
+        max_results: Maximum number of results
+        return_details: If True, returns full article details; if False, returns only PMIDs
+    
+    Returns:
+        List of article details with title, authors, journal, year, and abstract
+    """
+    # First, search for PMIDs
     url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
     params = dict(db="pubmed", term=query, retmax=max_results,
                   retmode="json", api_key=NCBI_KEY)
     r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
-    return r.json()["esearchresult"]["idlist"]
+    
+    pmids = r.json()["esearchresult"]["idlist"]
+    
+    if not return_details or not pmids:
+        return pmids
+    
+    # Fetch details for the PMIDs
+    articles_dict = pubmed_fetch(pmids)
+    
+    # Convert to list format with consistent ordering
+    articles_list = []
+    for pmid in pmids:
+        if pmid in articles_dict:
+            article = articles_dict[pmid]
+            articles_list.append({
+                "pmid": pmid,
+                "title": article["title"],
+                "authors": article["authors"],
+                "author_list": ", ".join(article["authors"][:3]) + (" et al." if len(article["authors"]) > 3 else ""),
+                "journal": article["journal"],
+                "year": article["year"],
+                "doi": article["doi"],
+                "abstract": article["abstract"],
+                "keywords": article["keywords"]
+            })
+    
+    return articles_list
 
 @mcp.tool
 def pubmed_fetch(pmids: List[str], format: str = "abstract") -> Dict[str, Any]:
@@ -157,15 +193,71 @@ def _respect_rate_limit():
     _last_call = time.time()
 
 @mcp.tool
-def semantic_scholar_search(query: str, limit: int = 20) -> list[dict]:
-    """Return title, year, url for papers matching `query` (S2)."""
+def semantic_scholar_search(query: str, limit: int = 20, year_range: Optional[str] = None, 
+                          min_citations: Optional[int] = None, fields_of_study: Optional[List[str]] = None) -> list[dict]:
+    """Search Semantic Scholar for papers with enhanced filtering.
+    
+    Args:
+        query: Search query
+        limit: Maximum number of results
+        year_range: Year range (e.g., "2020-2024" or "2023")
+        min_citations: Minimum citation count filter
+        fields_of_study: List of fields to filter by
+    
+    Returns:
+        List of papers with title, authors, year, citations, and more
+    """
     _respect_rate_limit()
     url = "https://api.semanticscholar.org/graph/v1/paper/search"
-    params = dict(query=query, limit=limit, fields="title,year,url,authors,abstract,citationCount")
+    
+    # Enhanced fields including more metadata
+    fields = "paperId,title,year,url,authors,abstract,citationCount,influentialCitationCount,venue,journal,publicationTypes,publicationDate,openAccessPdf,fieldsOfStudy,s2FieldsOfStudy"
+    
+    params = dict(query=query, limit=limit, fields=fields)
+    
+    # Add year filter if provided
+    if year_range:
+        params["year"] = year_range
+    
+    # Add fields of study filter if provided
+    if fields_of_study:
+        params["fieldsOfStudy"] = ",".join(fields_of_study)
+    
     headers = {"x-api-key": S2_KEY} if S2_KEY else {}
     r = requests.get(url, params=params, headers=headers, timeout=30)
     r.raise_for_status()
-    return r.json().get("data", [])
+    
+    papers = r.json().get("data", [])
+    
+    # Apply additional filters if needed
+    if min_citations is not None:
+        papers = [p for p in papers if (p.get("citationCount") or 0) >= min_citations]
+    
+    # Enhance paper data for easier consumption
+    enhanced_papers = []
+    for paper in papers:
+        enhanced = {
+            **paper,
+            # Add formatted author list
+            "author_names": [a.get("name", "Unknown") for a in (paper.get("authors") or [])],
+            "author_list": ", ".join([a.get("name", "Unknown") for a in (paper.get("authors") or [])[:3]]) + 
+                          (" et al." if len(paper.get("authors", [])) > 3 else ""),
+            # Add venue info
+            "venue_info": paper.get("venue") or paper.get("journal", {}).get("name") if isinstance(paper.get("journal"), dict) else paper.get("journal"),
+            # Add open access info
+            "has_pdf": bool(paper.get("openAccessPdf")),
+            "pdf_url": paper.get("openAccessPdf", {}).get("url") if paper.get("openAccessPdf") else None,
+            # Add publication info
+            "pub_date": paper.get("publicationDate") or str(paper.get("year", "Unknown")),
+            # Add citation metrics
+            "citation_metrics": {
+                "total": paper.get("citationCount", 0),
+                "influential": paper.get("influentialCitationCount", 0)
+            }
+        }
+        enhanced_papers.append(enhanced)
+    
+    return enhanced_papers
 
 @mcp.tool
 def semantic_scholar_paper_details(paper_id: str) -> dict:
@@ -179,13 +271,40 @@ def semantic_scholar_paper_details(paper_id: str) -> dict:
     """
     _respect_rate_limit()
     url = f"https://api.semanticscholar.org/graph/v1/paper/{paper_id}"
-    fields = "paperId,title,abstract,year,authors,citationCount,referenceCount,fieldsOfStudy,s2FieldsOfStudy,publicationTypes,journal,externalIds"
+    fields = "paperId,title,abstract,year,authors,citationCount,referenceCount,influentialCitationCount,fieldsOfStudy,s2FieldsOfStudy,publicationTypes,journal,venue,externalIds,openAccessPdf,publicationDate,citationsPerYear,url"
     params = {"fields": fields}
     headers = {"x-api-key": S2_KEY} if S2_KEY else {}
     
     r = requests.get(url, params=params, headers=headers, timeout=30)
     r.raise_for_status()
-    return r.json()
+    
+    paper = r.json()
+    
+    # Enhance the paper details
+    enhanced = {
+        **paper,
+        # Add formatted author list
+        "author_names": [a.get("name", "Unknown") for a in (paper.get("authors") or [])],
+        "author_list": ", ".join([a.get("name", "Unknown") for a in (paper.get("authors") or [])[:3]]) + 
+                      (" et al." if len(paper.get("authors", [])) > 3 else ""),
+        # Add venue info
+        "venue_info": paper.get("venue") or (paper.get("journal", {}).get("name") if isinstance(paper.get("journal"), dict) else paper.get("journal")),
+        # Add open access info
+        "has_pdf": bool(paper.get("openAccessPdf")),
+        "pdf_url": paper.get("openAccessPdf", {}).get("url") if paper.get("openAccessPdf") else None,
+        # Add DOI
+        "doi": paper.get("externalIds", {}).get("DOI") if paper.get("externalIds") else None,
+        # Add arXiv ID
+        "arxiv_id": paper.get("externalIds", {}).get("ArXiv") if paper.get("externalIds") else None,
+        # Enhanced citation metrics
+        "citation_metrics": {
+            "total": paper.get("citationCount", 0),
+            "influential": paper.get("influentialCitationCount", 0),
+            "yearly": paper.get("citationsPerYear", {})
+        }
+    }
+    
+    return enhanced
 
 @mcp.tool
 def semantic_scholar_citations(paper_id: str, limit: int = 20) -> list[dict]:
@@ -467,6 +586,115 @@ def crossref_journal_works(issn: str, rows: int = 20) -> dict:
         "total_results": data["message"]["total-results"],
         "items": data["message"]["items"]
     }
+
+# ---------- Combined Search Functions ----------------------------------
+@mcp.tool
+def multi_database_search(query: str, databases: Optional[List[str]] = None, max_results_per_db: int = 10) -> Dict[str, List[Dict[str, Any]]]:
+    """Search multiple academic databases simultaneously.
+    
+    Args:
+        query: Search query
+        databases: List of databases to search (default: all available)
+                  Options: ["pubmed", "semantic_scholar", "arxiv", "crossref"]
+        max_results_per_db: Maximum results per database
+    
+    Returns:
+        Dictionary with results from each database
+    """
+    if databases is None:
+        databases = ["pubmed", "semantic_scholar", "arxiv", "crossref"]
+    
+    results = {}
+    
+    # Search each database
+    if "pubmed" in databases:
+        try:
+            results["pubmed"] = pubmed_search(query, max_results=max_results_per_db, return_details=True)
+        except Exception as e:
+            results["pubmed_error"] = str(e)
+    
+    if "semantic_scholar" in databases:
+        try:
+            results["semantic_scholar"] = semantic_scholar_search(query, limit=max_results_per_db)
+        except Exception as e:
+            results["semantic_scholar_error"] = str(e)
+    
+    if "arxiv" in databases:
+        try:
+            results["arxiv"] = arxiv_search(query, max_results=max_results_per_db)
+        except Exception as e:
+            results["arxiv_error"] = str(e)
+    
+    if "crossref" in databases:
+        try:
+            crossref_result = crossref_works_search(query, rows=max_results_per_db)
+            results["crossref"] = crossref_result.get("items", [])
+        except Exception as e:
+            results["crossref_error"] = str(e)
+    
+    return results
+
+@mcp.tool
+def get_paper_by_identifier(identifier: str, id_type: Optional[str] = None) -> Dict[str, Any]:
+    """Get paper details using any identifier (DOI, PMID, arXiv ID, S2 ID).
+    
+    Args:
+        identifier: Paper identifier
+        id_type: Type of identifier (doi, pmid, arxiv, s2). If None, will try to auto-detect.
+    
+    Returns:
+        Paper details from the appropriate database
+    """
+    # Auto-detect identifier type if not specified
+    if id_type is None:
+        if identifier.startswith("10.") and "/" in identifier:
+            id_type = "doi"
+        elif identifier.isdigit() and len(identifier) >= 7:
+            id_type = "pmid"
+        elif "." in identifier and any(char.isdigit() for char in identifier):
+            id_type = "arxiv"
+        else:
+            id_type = "s2"
+    
+    try:
+        if id_type == "doi":
+            # Try CrossRef first for DOI
+            crossref_data = crossref_doi_lookup(identifier)
+            # Also try Semantic Scholar
+            try:
+                s2_data = semantic_scholar_paper_details(identifier)
+                # Merge data
+                return {
+                    "source": "crossref+semantic_scholar",
+                    "crossref": crossref_data,
+                    "semantic_scholar": s2_data
+                }
+            except:
+                return {"source": "crossref", **crossref_data}
+        
+        elif id_type == "pmid":
+            # Fetch from PubMed
+            articles = pubmed_fetch([identifier])
+            if identifier in articles:
+                return {"source": "pubmed", **articles[identifier]}
+            else:
+                raise ValueError(f"PMID {identifier} not found")
+        
+        elif id_type == "arxiv":
+            # Fetch from arXiv
+            paper = arxiv_paper(identifier)
+            return {"source": "arxiv", **paper}
+        
+        elif id_type == "s2":
+            # Fetch from Semantic Scholar
+            paper = semantic_scholar_paper_details(identifier)
+            return {"source": "semantic_scholar", **paper}
+        
+        else:
+            raise ValueError(f"Unknown identifier type: {id_type}")
+    
+    except Exception as e:
+        return {"error": str(e), "identifier": identifier, "id_type": id_type}
 
 # ---------- Entrypoint -------------------------------------------------
 app = mcp.http_app()  # Create the HTTP app for uvicorn
