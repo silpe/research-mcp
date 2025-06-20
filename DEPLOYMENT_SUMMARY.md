@@ -27,10 +27,11 @@ Deployed a FastMCP server to Render that provides three research tools:
 
 ### Environment Variables (configured in Render)
 ```
-NCBI_API_KEY=02be66afbd78b6b7defae6e82867dec98f0a
-S2_API_KEY=ZButaDpBVB9TX4IOZfa7M1FDstNO0kfo2HdjZ3nm
-REDDIT_CLIENT_ID=UXzxXAidPWnlc7We5tfENw
-REDDIT_CLIENT_SECRET=mnvioZO8Gc42nD_xbRt1RDdrrPNULw
+NCBI_API_KEY=<YOUR_NCBI_API_KEY>
+S2_API_KEY=<YOUR_S2_API_KEY>
+REDDIT_CLIENT_ID=<YOUR_REDDIT_CLIENT_ID>
+REDDIT_CLIENT_SECRET=<YOUR_REDDIT_CLIENT_SECRET>
+MCP_AUTH_TOKEN=<GENERATE_A_SECURE_TOKEN>
 ```
 
 ### MCP Registration

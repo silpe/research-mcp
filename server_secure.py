@@ -1,10 +1,10 @@
 # -----------------------------------------------------------
-# server.py  – ResearchHub MCP (PubMed, Semantic Scholar, Reddit)
+# server_secure.py  – ResearchHub MCP with Authentication
 # -----------------------------------------------------------
 from fastmcp import FastMCP
 import os, requests, requests.auth, time
-import secrets
 from typing import Optional
+import secrets
 
 mcp = FastMCP("ResearchHub")
 
@@ -28,7 +28,7 @@ async def auth_middleware(ctx, call_next):
     return await call_next(ctx)
 
 # ---------- PubMed ----------------------------------------------------
-NCBI_KEY = os.getenv("NCBI_API_KEY")           # ← we'll set this on Render
+NCBI_KEY = os.getenv("NCBI_API_KEY")
 
 @mcp.tool
 def pubmed_search(query: str, max_results: int = 20) -> list[str]:
@@ -41,8 +41,8 @@ def pubmed_search(query: str, max_results: int = 20) -> list[str]:
     return r.json()["esearchresult"]["idlist"]
 
 # ---------- Semantic Scholar ------------------------------------------
-S2_KEY = os.getenv("S2_API_KEY")               # your key goes in Render
-RATE_LIMIT = 1          # 1 request / second (per docs & your note)
+S2_KEY = os.getenv("S2_API_KEY")
+RATE_LIMIT = 1
 
 _last_call = 0.0
 def _respect_rate_limit():
@@ -90,7 +90,7 @@ def reddit_search(query: str, limit: int = 20, sort: str = "new") -> list[dict]:
     return [c["data"] for c in r.json()["data"]["children"]]
 
 # ---------- Entrypoint -------------------------------------------------
-app = mcp.http_app()  # Create the HTTP app for uvicorn
+app = mcp.http_app()
 
 if __name__ == "__main__":
     import uvicorn
