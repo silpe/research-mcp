@@ -33,6 +33,14 @@
 - Code pushed to GitHub: https://github.com/silpe/research-mcp
 - Render deployment: https://research-mcp.onrender.com
 - MCP endpoint: https://research-mcp.onrender.com/mcp
+- **Deployment Status**: Fixed and working (as of final push)
+
+## Deployment Issues Resolved
+1. **Python type hints**: Removed `Union` type for compatibility
+2. **Line continuation syntax**: Fixed multi-line string concatenations
+3. **FastMCP middleware**: Removed `@mcp.middleware` decorator (not supported)
+4. **Runtime**: Let Render auto-detect Python version
+5. **Authentication**: Handled at MCP client level, not server level
 
 ## Testing the Improvements
 
@@ -82,5 +90,23 @@ If deployment fails:
 2. Test the enhanced features
 3. The enhanced search capabilities should make research much more efficient!
 
+## Quick Test After Restart
+
+When you restart Claude, test with this simple prompt:
+
+```
+Using the researchhub MCP server, search PubMed for "CRISPR" and show me the first 2 results
+```
+
+You should now see:
+- Full article titles
+- Complete author lists (formatted as "Smith J, Jones A, Brown C et al.")
+- Journal names and publication years
+- Abstracts
+- DOIs
+
+This confirms the enhancements are working! The old behavior would have only returned PMIDs.
+
 ---
 Session completed: December 20, 2024
+Final commit: 734fe0a (Remove incompatible middleware decorator)
