@@ -36,7 +36,11 @@ MCP_AUTH_TOKEN=<GENERATE_A_SECURE_TOKEN>
 
 ### MCP Registration
 ```bash
-claude mcp add researchhub --transport http https://research-mcp.onrender.com/mcp
+# Without authentication (old, insecure):
+# claude mcp add researchhub -t http https://research-mcp.onrender.com/mcp
+
+# With authentication (secure):
+claude mcp add researchhub -t http https://research-mcp.onrender.com/mcp -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ## Key Implementation Details
