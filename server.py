@@ -240,8 +240,7 @@ def semantic_scholar_search(query: str, limit: int = 20, year_range: Optional[st
             **paper,
             # Add formatted author list
             "author_names": [a.get("name", "Unknown") for a in (paper.get("authors") or [])],
-            "author_list": ", ".join([a.get("name", "Unknown") for a in (paper.get("authors") or [])[:3]]) + 
-                          (" et al." if len(paper.get("authors", [])) > 3 else ""),
+            "author_list": ", ".join([a.get("name", "Unknown") for a in (paper.get("authors") or [])[:3]]) + (" et al." if len(paper.get("authors", [])) > 3 else ""),
             # Add venue info
             "venue_info": paper.get("venue") or paper.get("journal", {}).get("name") if isinstance(paper.get("journal"), dict) else paper.get("journal"),
             # Add open access info
@@ -285,8 +284,7 @@ def semantic_scholar_paper_details(paper_id: str) -> dict:
         **paper,
         # Add formatted author list
         "author_names": [a.get("name", "Unknown") for a in (paper.get("authors") or [])],
-        "author_list": ", ".join([a.get("name", "Unknown") for a in (paper.get("authors") or [])[:3]]) + 
-                      (" et al." if len(paper.get("authors", [])) > 3 else ""),
+        "author_list": ", ".join([a.get("name", "Unknown") for a in (paper.get("authors") or [])[:3]]) + (" et al." if len(paper.get("authors", [])) > 3 else ""),
         # Add venue info
         "venue_info": paper.get("venue") or (paper.get("journal", {}).get("name") if isinstance(paper.get("journal"), dict) else paper.get("journal")),
         # Add open access info
