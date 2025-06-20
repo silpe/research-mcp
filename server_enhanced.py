@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 import json
 
-mcp = FastMCP("ResearchHub")
+mcp = FastMCP("ResearchHub Enhanced")
 
 # ---------- Authentication --------------------------------------------
 MCP_AUTH_TOKEN = os.getenv("MCP_AUTH_TOKEN")
