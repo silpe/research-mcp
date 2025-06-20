@@ -69,5 +69,8 @@ def reddit_search(query: str, limit: int = 20, sort: str = "new") -> list[dict]:
     return [c["data"] for c in r.json()["data"]["children"]]
 
 # ---------- Entrypoint -------------------------------------------------
+app = mcp.http_app()  # Create the HTTP app for uvicorn
+
 if __name__ == "__main__":
-    mcp.run()     # Render sets PORT ⇒ uvicorn auto‑starts
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
