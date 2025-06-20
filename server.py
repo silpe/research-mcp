@@ -34,7 +34,7 @@ async def auth_middleware(ctx, call_next):
 NCBI_KEY = os.getenv("NCBI_API_KEY")
 
 @mcp.tool
-def pubmed_search(query: str, max_results: int = 20, return_details: bool = True) -> Union[List[str], List[Dict[str, Any]]]:
+def pubmed_search(query: str, max_results: int = 20, return_details: bool = True):
     """Search PubMed and return article details.
     
     Args:
