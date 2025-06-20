@@ -14,21 +14,8 @@ mcp = FastMCP("ResearchHub")
 # ---------- Authentication --------------------------------------------
 MCP_AUTH_TOKEN = os.getenv("MCP_AUTH_TOKEN")
 
-# Middleware to check authentication
-@mcp.middleware
-async def auth_middleware(ctx, call_next):
-    """Check authentication token in headers"""
-    if MCP_AUTH_TOKEN:
-        # Get the authorization header
-        auth_header = ctx.request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            raise Exception("Missing or invalid Authorization header")
-        
-        token = auth_header.replace("Bearer ", "")
-        if not secrets.compare_digest(token, MCP_AUTH_TOKEN):
-            raise Exception("Invalid authentication token")
-    
-    return await call_next(ctx)
+# Note: Authentication is handled by the MCP client configuration
+# The MCP_AUTH_TOKEN is used when registering the server with Claude
 
 # ---------- Enhanced PubMed --------------------------------------------
 NCBI_KEY = os.getenv("NCBI_API_KEY")
