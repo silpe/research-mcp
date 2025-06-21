@@ -15,5 +15,7 @@ services:
         sync: false
       - key: REDDIT_CLIENT_SECRET
         sync: false
+      - key: NCBI_API_KEY
+        sync: false
     autoDeploy: true
     healthCheckPath: /

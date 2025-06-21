@@ -7,9 +7,10 @@
 
 2. Fill in the required environment variables when prompted:
    - **MCP_AUTH_TOKEN**: `1S8q-XGU6zVZ56n9WotKv5IKKlMDPYw7e3ONBEN0wGU`
-   - **S2_API_KEY**: (Get from https://www.semanticscholar.org/product/api)
-   - **REDDIT_CLIENT_ID**: (Optional - from https://www.reddit.com/prefs/apps)
-   - **REDDIT_CLIENT_SECRET**: (Optional - from Reddit app settings)
+   - **S2_API_KEY**: `ZButaDpBVB9TX4IOZfa7M1FDstNO0kfo2HdjZ3nm`
+   - **REDDIT_CLIENT_ID**: `UXzxXAidPWnlc7We5tfENw`
+   - **REDDIT_CLIENT_SECRET**: `mnvioZO8Gc42nD_xbRt1RDdrrPNULw`
+   - **NCBI_API_KEY**: `02be66afbd78b6b7defae6e82867dec98f0a`
 
 ## Manual Deploy
 
@@ -32,9 +33,10 @@ If the button doesn't work, follow these steps:
 3. **Add Environment Variables**:
    Click "Advanced" and add:
    - `MCP_AUTH_TOKEN` = `1S8q-XGU6zVZ56n9WotKv5IKKlMDPYw7e3ONBEN0wGU`
-   - `S2_API_KEY` = (your Semantic Scholar API key)
-   - `REDDIT_CLIENT_ID` = (optional)
-   - `REDDIT_CLIENT_SECRET` = (optional)
+   - `S2_API_KEY` = `ZButaDpBVB9TX4IOZfa7M1FDstNO0kfo2HdjZ3nm`
+   - `REDDIT_CLIENT_ID` = `UXzxXAidPWnlc7We5tfENw`
+   - `REDDIT_CLIENT_SECRET` = `mnvioZO8Gc42nD_xbRt1RDdrrPNULw`
+   - `NCBI_API_KEY` = `02be66afbd78b6b7defae6e82867dec98f0a`
 
 4. **Create Web Service**
 
