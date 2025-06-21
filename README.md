@@ -1,173 +1,112 @@
 # Research MCP Service
 
-A unified MCP (Model Context Protocol) service providing access to multiple academic research databases and platforms.
+A unified MCP (Model Context Protocol) service providing access to multiple academic research databases and platforms, deployed remotely on Render.
 
-**Status**: ✅ Running remotely on Render for Claude Code (January 2025)
-**IMPORTANT**: This service runs REMOTELY on Render, NOT locally. Configuration is for Claude Code only (not Claude Desktop).
+**Status**: ✅ Remote deployment on Render  
+**Compatible with**: Claude Code (using `mcp` command)  
+**Service URL**: https://research-mcp.onrender.com
 
-## Features
+## Available Research Tools
 
-### Academic Databases
-- **PubMed** - Biomedical literature search and retrieval
-- **Semantic Scholar** - AI-powered research paper database
-- **arXiv** - Preprint repository for scientific papers
-- **CrossRef** - Scholarly metadata and DOI lookup
-
-### Additional Sources
-- **Reddit Integration** - Academic discussions and community insights
-
-### Multi-Source Capabilities
-- Search across all databases simultaneously
-- Retrieve papers by DOI, arXiv ID, or Semantic Scholar ID
-
-## Remote Deployment on Render
-
-This service is deployed remotely on Render at: `https://research-mcp.onrender.com`
-
-### Claude Code Configuration
-
-To use this service with Claude Code, add the following to your `~/.config/claude-code/config.json`:
-
-```json
-{
-  "mcpServers": {
-    "researchhub": {
-      "transport": {
-        "type": "http",
-        "url": "https://research-mcp.onrender.com/mcp",
-        "headers": {
-          "Authorization": "Bearer YOUR_MCP_AUTH_TOKEN"
-        }
-      }
-    }
-  }
-}
-```
-
-After adding this configuration, restart Claude Code to connect to the remote MCP server.
-
-### Environment Variables (Set in Render Dashboard)
-
-The following environment variables must be configured in your Render deployment:
-
-- `MCP_AUTH_TOKEN` - Your secure authentication token
-- `NCBI_API_KEY` - Your PubMed API key
-- `S2_API_KEY` - Your Semantic Scholar API key
-- `REDDIT_CLIENT_ID` - Your Reddit client ID
-- `REDDIT_CLIENT_SECRET` - Your Reddit client secret
-
-## Available Functions
-
-### PubMed
-- `pubmed_search` - Search and get full article details
-- `pubmed_fetch` - Fetch details for specific PMIDs
+### 📚 PubMed
+- `pubmed_search` - Search biomedical literature
+- `pubmed_fetch` - Get full article details
 - `pubmed_summary` - Get concise article summaries
 
-### Semantic Scholar
-- `semantic_scholar_search` - Advanced search with filtering
-- `semantic_scholar_paper_details` - Get paper details with citations
-- `semantic_scholar_citations` - Find citing papers
-- `semantic_scholar_references` - Get referenced papers
-- `semantic_scholar_author_search` - Search for authors
+### 🎓 Semantic Scholar
+- `semantic_scholar_search` - AI-powered paper search
+- `semantic_scholar_paper_details` - Detailed paper information
+- `semantic_scholar_citations` - Get citing papers
+- `semantic_scholar_references` - Get paper references
+- `semantic_scholar_author_search` - Find authors
 - `semantic_scholar_author_papers` - Get author's publications
 
-### Reddit
-- `reddit_search` - Search across Reddit
-- `reddit_subreddit_search` - Search specific subreddits
-- `reddit_comments` - Fetch comment threads
+### 💬 Reddit
+- `reddit_search` - Search Reddit posts
+- `reddit_subreddit_search` - Search within subreddits
+- `reddit_comments` - Get post comments
 
-### arXiv
-- `arxiv_search` - Search with complex queries
-- `arxiv_paper` - Get paper by ID
+### 📄 arXiv
+- `arxiv_search` - Search preprint repository
+- `arxiv_paper` - Get specific paper details
 
-### CrossRef
+### 🔍 CrossRef
 - `crossref_works_search` - Search scholarly works
-- `crossref_doi_lookup` - Lookup by DOI
+- `crossref_doi_lookup` - Look up by DOI
 - `crossref_journal_works` - Get journal publications
 
-### Multi-Source
-- `multi_database_search` - Search across all databases
-- `get_paper_by_identifier` - Get paper by DOI, arXiv ID, or S2 ID
+## Setup Instructions
 
-## API Keys
+### 1. Deploy to Render
 
-### Getting API Keys
-1. **PubMed (NCBI)**: https://ncbiinsights.ncbi.nlm.nih.gov/api-keys/
-2. **Semantic Scholar**: https://www.semanticscholar.org/product/api
-3. **Reddit**: https://www.reddit.com/prefs/apps (create a "script" app)
+1. Go to [Render Dashboard](https://dashboard.render.com)
+2. Create new Web Service
+3. Connect repository: `silpe/research-mcp`
+4. Configure:
+   - **Name**: `research-mcp`
+   - **Branch**: `main`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python -m uvicorn server:app --host 0.0.0.0 --port $PORT`
 
-### Why API Keys Matter
-- **PubMed**: 10 requests/second with key vs 3/second without
-- **Semantic Scholar**: Higher rate limits with key
-- **Reddit**: Required for authenticated access
+5. Add environment variables:
+   ```
+   MCP_AUTH_TOKEN = [your-generated-token]
+   S2_API_KEY = [Semantic Scholar API key]
+   REDDIT_CLIENT_ID = [Reddit app ID]
+   REDDIT_CLIENT_SECRET = [Reddit app secret]
+   NCBI_API_KEY = [NCBI API key]
+   ```
 
-## Usage Examples
+### 2. Connect with Claude Code
 
-### Search across all databases
-```
-Search for recent papers about "CRISPR gene editing cancer therapy" across all available databases.
-```
+After deployment completes, run this single command:
 
-### Specific database searches
-```python
-# PubMed search
-articles = pubmed_search("CAR-T immunotherapy", max_results=10)
-
-# Semantic Scholar with filters
-papers = semantic_scholar_search(
-    "deep learning",
-    year_range="2023-2024",
-    min_citations=50
-)
-
-# Reddit discussions
-posts = reddit_subreddit_search("MachineLearning", "transformer models")
-
-# Get paper by DOI
-paper = get_paper_by_identifier("10.1038/nature12373")
+```bash
+mcp add researchhub -t http https://research-mcp.onrender.com/mcp -H "Authorization: Bearer YOUR_MCP_AUTH_TOKEN"
 ```
 
-## Rate Limits
+Replace `YOUR_MCP_AUTH_TOKEN` with the token you set in Render.
 
-- **PubMed**: 10/sec with API key, 3/sec without
-- **Semantic Scholar**: 1/sec (enforced in code)
-- **Reddit**: Standard API limits
-- **arXiv**: No hard limit, be respectful
-- **CrossRef**: Generous limits
+### 3. Verify Connection
+
+In Claude Code, you should see the ResearchHub tools available. Test with:
+- "Search PubMed for CRISPR"
+- "Find papers about machine learning on Semantic Scholar"
+- "Search arXiv for quantum computing"
 
 ## Troubleshooting
 
-1. **MCP not loading in Claude Code**
-   - Ensure `~/.config/claude-code/config.json` contains the correct configuration
-   - Verify the Render service is running at `https://research-mcp.onrender.com`
-   - Restart Claude Code after configuration changes
-   - Note: Free Render tier may take up to 60 seconds to wake up on first request
+### Service not responding
+- Free Render services sleep after 15 minutes of inactivity
+- First request may take ~30 seconds to wake up
+- Check Render dashboard for deployment status
 
-2. **Authentication errors**
-   - Verify your MCP_AUTH_TOKEN in the config matches the one set in Render
-   - Check that all API keys are correctly set in Render's environment variables
+### Authentication errors
+- Ensure the MCP_AUTH_TOKEN in your command matches the one in Render
+- Token should be in format: `Bearer YOUR_TOKEN`
 
-3. **Rate limit errors**
-   - Ensure API keys are configured in Render dashboard
-   - The service implements automatic rate limiting for each API
+### Rate limiting
+- Semantic Scholar: 1 request/second
+- Reddit: Automatic token refresh
+- PubMed: Uses NCBI API key for higher limits
 
-4. **Connection timeouts**
-   - Free Render services sleep after inactivity
-   - First request may take longer as the service wakes up
-   - Subsequent requests will be faster
+## Security Notes
 
-## Security
+- Never commit API keys to the repository
+- All API keys should be set in Render environment variables
+- Generate secure tokens: `python3 -c "import secrets; print(secrets.token_urlsafe(32))"`
 
-1. **Never commit API keys or tokens** to the repository
-2. **All sensitive data should be stored in Render environment variables**
-3. **Generate secure tokens**: 
-   ```bash
-   python3 -c "import secrets; print(secrets.token_urlsafe(32))"
-   ```
-4. **The MCP_AUTH_TOKEN in your Claude Code config** should match the one in Render
+## Development
 
-## Repository Information
+To contribute or run locally for testing:
+1. Clone the repository
+2. Create `.env` file with API keys
+3. Run: `python server.py`
 
-- **Author**: Justin Silpe
-- **License**: MIT
-- **Last Updated**: January 2025
+## License
+
+MIT License - See LICENSE file for details
+
+---
+**Author**: Justin Silpe  
+**Last Updated**: January 2025
