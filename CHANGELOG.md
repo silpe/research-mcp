@@ -1,6 +1,18 @@
 # Changelog
 
-## 2025-06-20 - Enhanced Version
+## 2025-06-20 - Bug Fix Release
+
+### Fixed
+- **Critical**: Fixed MCP tool calling issue where functions were returning coroutine objects instead of actual data
+- All tool functions now properly await their implementation functions
+- Ensured consistent async/await pattern throughout the codebase
+
+### Technical Details
+- Separated tool functions (with `@mcp.tool()` decorator) from implementation functions (`_impl` suffix)
+- All tool functions are now simple wrappers that await their corresponding implementation
+- This fix ensures proper data flow through the MCP protocol
+
+## 2024-12-20 - Enhanced Version
 
 ### Added
 - **PubMed**: `pubmed_fetch` and `pubmed_summary` for full article details

@@ -1,4 +1,29 @@
-# ResearchHub MCP Session Notes - December 20, 2024
+# ResearchHub MCP Session Notes
+
+## Latest Session - June 20, 2025
+
+### Critical Bug Fix
+- **Issue**: All MCP tool functions were returning `<coroutine object>` instead of actual data
+- **Root Cause**: Tool functions were not awaiting their implementation functions
+- **Solution**: Ensured all `@mcp.tool()` decorated functions properly await their `_impl` counterparts
+- **Result**: All functions now working correctly and returning proper data
+
+### Implementation Pattern
+The codebase now follows a clean pattern:
+1. **Tool functions** (with `@mcp.tool()` decorator) - Simple wrappers for MCP protocol
+2. **Implementation functions** (with `_impl` suffix) - Contain actual business logic
+3. All tool functions are async and await their implementations
+
+Example:
+```python
+@mcp.tool()
+async def pubmed_search(...):
+    return await _pubmed_search_impl(...)
+```
+
+---
+
+## Previous Session - December 20, 2024
 
 ## What We Accomplished
 

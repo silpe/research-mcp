@@ -106,9 +106,16 @@ print(f"arXiv: {len(all_results['arxiv'])} results")
 4. **Convenience**: Auto-detect paper identifiers and formatted output
 5. **Backward compatible**: Existing code continues to work
 
-## Deployment
+## Technical Implementation
 
-To deploy these changes:
-1. Commit and push to your repository
-2. Render will automatically redeploy the service
-3. No changes needed to environment variables or configuration
+### Code Architecture
+- Uses `_impl` suffix pattern for implementation functions
+- MCP tool functions are thin async wrappers
+- Clean separation between protocol handling and business logic
+- All functions properly handle async/await flow
+
+### Deployment Notes
+- Service is deployed on Render.com
+- Auto-deploys from GitHub repository
+- Environment variables required for API keys
+- Free tier may sleep after 15 minutes of inactivity

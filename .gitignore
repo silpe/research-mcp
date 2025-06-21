@@ -27,3 +27,11 @@ Thumbs.db
 SECURE_SETUP_INSTRUCTIONS.md
 *_token.txt
 *_secret*
+
+# Log files
+*.log
+
+# Backup files
+*_backup.py
+*_fixed.py
+test_*.py
