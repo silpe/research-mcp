@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: research-mcp
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: MCP_AUTH_TOKEN
+        generateValue: true
+      - key: S2_API_KEY
+        sync: false
+      - key: REDDIT_CLIENT_ID
+        sync: false
+      - key: REDDIT_CLIENT_SECRET
+        sync: false
+    autoDeploy: true
+    healthCheckPath: /
